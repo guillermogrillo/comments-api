@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/guillermogrillo/comments-api/internal/comment"
@@ -9,12 +8,22 @@ import (
 	"github.com/guillermogrillo/comments-api/internal/database"
 
 	transportHTTP "github.com/guillermogrillo/comments-api/internal/transport/http"
+
+	log "github.com/sirupsen/logrus"
 )
 
-type App struct{}
+type App struct {
+	Name    string
+	Version string
+}
 
 func (app *App) Run() error {
-	fmt.Println("Setting up the app")
+	log.SetFormatter(&log.JSONFormatter{})
+	log.WithFields(
+		log.Fields{
+			"AppName":    app.Name,
+			"AppVersion": app.Version,
+		}).Info("Starting application")
 	var err error
 	db, err := database.NewDatabase()
 	if err != nil {
@@ -23,7 +32,7 @@ func (app *App) Run() error {
 
 	err = database.MigrateDB(db)
 	if err != nil {
-		fmt.Println("Error running the migration")
+		log.Error("Error running the migration")
 		return err
 	}
 
@@ -39,11 +48,12 @@ func (app *App) Run() error {
 }
 
 func main() {
-	fmt.Println("Comments service")
-
-	app := App{}
+	app := App{
+		Name:    "comments-api",
+		Version: "1.0.0",
+	}
 	if err := app.Run(); err != nil {
-		fmt.Println("Error starting app")
-		fmt.Println(err)
+		log.Error("Error starting app")
+		log.Fatal(err)
 	}
 }
